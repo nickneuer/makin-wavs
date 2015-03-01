@@ -49,11 +49,9 @@ class MarkovDict(object):
     def write_licks(self, duration, outfile):
         freq_lu = self.freq_dict
         freqs = self.shred(duration)
-        data = []
-        used_freqs = []
-        for freq in freqs:
-            used_freqs.append(freq)
-            data.append(freq_lu[freq][used_freqs.count(freq)-1])
+        data = [] 
+        for freq in freqs: 
+            data.append(random.choice(freq_lu[freq]))
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)
