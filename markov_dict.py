@@ -50,8 +50,12 @@ class MarkovDict(object):
         freq_lu = self.freq_dict
         freqs = self.shred(duration)
         data = [] 
+        used_freqs = []
         for freq in freqs: 
-            data.append(random.choice(freq_lu[freq]))
+            used_freqs.append(freq)
+            idx = used_freqs.count(freq)-1
+            idx = idx % len(freq_lu[freq])
+            data.append(freq_lu[freq][idx])            
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)
