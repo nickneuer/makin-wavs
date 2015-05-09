@@ -55,7 +55,8 @@ class MarkovDict(object):
             used_freqs.append(freq)
             idx = used_freqs.count(freq)-1
             idx = idx % len(freq_lu[freq])
-            data.append(freq_lu[freq][idx])            
+            if len(freq_lu[freq][idx]) > 1024:
+                data.append(freq_lu[freq][idx])            
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)

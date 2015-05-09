@@ -8,6 +8,8 @@ fl = sys.argv[1]
 ngram_size = int(sys.argv[2])
 duration = int(sys.argv[3])
 
+# python nunu_shredder.py Faster_licks.wav 4 150
+ 
 flname = './wavs/input/' + fl 
 
 rt, data = wavfile.read(flname)
