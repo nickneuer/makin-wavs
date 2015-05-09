@@ -1,8 +1,11 @@
-
+import os
 from markov_dict import MarkovDict
 from freq_writer import * 
 from scipy.io import wavfile
 import sys 
+
+if not os.path.isdir("./wavs/output"):
+    os.path.makedirs("./wavs/output")
 
 fl = sys.argv[1]
 ngram_size = int(sys.argv[2])
