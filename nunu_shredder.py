@@ -15,13 +15,17 @@ duration = int(sys.argv[3])
  
 flname = './wavs/input/' + fl 
 
-rt, data = wavfile.read(flname)
+#rt, data = wavfile.read(flname)
 
-windows = make_windows(flname, 1024)
+#windows = make_windows(flname, 1024)
 
-mk = MarkovDict(windows, rt, ngram_size)
+#mk = MarkovDict(windows, rt, ngram_size)
+
+mk = MarkovDict(ngram_size)
 
 outfile = 'processed_' + fl
 
-mk.write_licks(duration, outfile)  
+#mk.write_licks(duration, outfile)  
+
+mk.write_licks(flname, duration, outfile)
 

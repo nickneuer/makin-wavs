@@ -2,27 +2,34 @@ from scipy import stats
 import numpy as np
 from scipy.io import wavfile
 
-fl = './wavs/input/scales_stuff.wav'
+# fl = './wavs/input/scales_stuff.wav'
 
-rt, dat = wavfile.read(fl)
+# rt, dat = wavfile.read(fl)
 
 def make_windows(fl, length):
     rate, data = wavfile.read(fl)
     data = data.T[0]
     return np.array_split(data, data.size/float(length))
     
-def get_freqs(windows, rate):
+def rate_and_windows(fl, length):
+    rate, data = wavfile.read(fl)
+    windows = make_windows(fl, length)
+    return rate, windows
+
+def get_freqs(windows, rate): 
+    # returns a list of frequencies corresponding to each window
     # windows an array of np arrays
     hanning_windows = [np.hanning(len(window))*window for window in windows]
     fourier = [np.fft.fft(window) for window in hanning_windows] 
+
     the_freqs = [np.fft.fftfreq(len(window)) for window in fourier]
     filtered_freqs = []
     for coeffs, freqs in zip(fourier, the_freqs):
         idx = np.argmax(np.abs(coeffs))
         #max_freq = rate * freqs[idx]
-        max_freq = abs(rate * freqs[idx])
+        max_freq = abs(rate * freqs[idx]) # unsure if abs should be used here
         filtered_freqs.append(max_freq)
-    return filtered_freqs
+    return filtered_freqs 
 
 def group_by_threshold(li, threshold):
     # to group similar frequencies into same note
