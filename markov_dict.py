@@ -1,4 +1,3 @@
-
 from freq_writer import * 
 import sys
 from scipy.io import wavfile
