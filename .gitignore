@@ -1,4 +1,4 @@
 *.wav
 *.swp
 *.pyc
-wavs
+#-wavs
