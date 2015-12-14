@@ -1,6 +1,7 @@
 from scipy import stats
 import numpy as np
 from scipy.io import wavfile
+from matplotlib import pyplot as plt
 
 # fl = './wavs/input/scales_stuff.wav'
 
@@ -16,20 +17,34 @@ def rate_and_windows(fl, length):
     windows = make_windows(fl, length)
     return rate, windows
 
-def get_freqs(windows, rate): 
+def rolling_modes(freqs):
+    modes = map(lambda n: stats.mode(freqs[n-1 : n + 3])[0][0], np.arange(1, len(freqs) - 2))
+    return modes
+
+def get_freqs(windows, rate, window_size=1024): 
     # returns a list of frequencies corresponding to each window
     # windows an array of np arrays
     hanning_windows = [np.hanning(len(window))*window for window in windows]
-    fourier = [np.fft.fft(window) for window in hanning_windows] 
+    padding = np.zeros(window_size)
+    padded_windows = map(lambda window: np.append(window, padding), hanning_windows) 
+    fourier = [np.fft.fft(window) for window in padded_windows] # hanning_windows] 
 
     the_freqs = [np.fft.fftfreq(len(window)) for window in fourier]
     filtered_freqs = []
     for coeffs, freqs in zip(fourier, the_freqs):
+        #idx = np.argmax(np.abs(coeffs))
         idx = np.argmax(np.abs(coeffs))
         #max_freq = rate * freqs[idx]
         max_freq = abs(rate * freqs[idx]) # unsure if abs should be used here
         filtered_freqs.append(max_freq)
-    return filtered_freqs 
+    return rolling_modes(rolling_modes(filtered_freqs)) 
+
+def plot_freqs(fl):
+    rt = wavfile.read(fl)[0]
+    windows = make_windows(fl, 1024)
+    freqs = get_freqs(windows, rt)
+    plt.plot(freqs, 'ro')
+    plt.show()
 
 def group_by_threshold(li, threshold):
     # to group similar frequencies into same note
@@ -53,9 +68,15 @@ def freq_dict(windows, rate, threshold=5):
             # groups together data which produces this frequency as value for freq_key
         else:
             freq_lu[freq_key].append(np.int16(np.concatenate(group.T[1])))
-        # don't want the values to be concatenated when different groups have same freq_key
-        # need condition to prevent this 
+
     return freq_lu
 
-        
-    
+def smooth_onset(signal):
+    return np.array(np.hanning(len(signal) ) * signal, dtype='int16') 
+
+def check_freqs(freq_list):
+    data = [0]
+    for freq in freq_list:
+        data = np.append(data, freq)
+        data = np.array(data, dtype='int16')
+    wavfile.write('test.wav', 44100, data)

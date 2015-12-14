@@ -7,11 +7,13 @@ import random
 # Then one MarkovDict can be created and used for multiple files 
 
 class MarkovDict(object):
-    def __init__(self, prefix_length, window_size=1024):
+    def __init__(self, prefix_length, window_size=1024, filter_length=1024, threshold=5):
         # self.windows = windows
         self.prefix_length = prefix_length
         #self.rate = rate
         self.window_size = window_size
+        self.filter_length = filter_length
+        self.threshold = threshold
         
     def freq_dict(self, fl): 
         rt, data = wavfile.read(fl)
@@ -23,7 +25,7 @@ class MarkovDict(object):
         freq_list = get_freqs(windows, rt)
         freq_zip = zip(freq_list, freq_list)
         
-        grps = np.array(group_by_threshold(freq_zip, 5))
+        grps = np.array(group_by_threshold(freq_zip, self.threshold))
         grps = map(lambda x: x.T[0], grps)
         grps = map(list, grps)
 
@@ -67,7 +69,6 @@ class MarkovDict(object):
 
     def write_licks(self, fl, duration, outfile):
         rt, windows = rate_and_windows(fl, self.window_size)
-        
         freq_lu = self.freq_dict(fl)
         freqs = self.shred(duration, fl)
         data = [] 
@@ -77,10 +78,11 @@ class MarkovDict(object):
             # idx = used_freqs.count(freq)-1
             # idx = idx % len(freq_lu[freq])
             freq_data = random.choice(freq_lu[freq])
-            if len(freq_data) > 1024:
-                data.append(freq_data)            
+            if len(freq_data) > self.filter_length:
+                data.append(freq_data ) #smooth_onset(freq_data))            
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)
+
 
         
