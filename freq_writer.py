@@ -53,6 +53,14 @@ def group_by_threshold(li, threshold):
     li = np.array(li, dtype='O')
     return np.split(li, np.where(abs(np.diff(li.T[0])) > threshold)[0]+1)
 
+def normalize_freq_list(freq_list, threshold):
+    key_choices = np.split(freq_list, np.where(np.diff(keys) > threshold)[0] + 1)
+    key_lkp = {}
+    for arr in key_choices:
+        for elt in arr:
+            val = arr[0]
+            key_lkp[elt] = val
+    return map(lambda f: key_lkp[f], freq_list) 
 
 def freq_dict(windows, rate, threshold=5):
     freq_lu = dict()
@@ -80,3 +88,23 @@ def check_freqs(freq_list):
         data = np.append(data, freq)
         data = np.array(data, dtype='int16')
     wavfile.write('test.wav', 44100, data)
+
+def merge_keys(dct, threshold):
+    keys = sorted(dct.keys())
+    key_choices = np.split(keys, np.where(np.diff(keys) > threshold)[0] + 1)
+    key_lkp = {}
+    for arr in key_choices:
+        for elt in arr:
+            val = arr[0]
+            key_lkp[elt] = val
+    new_dict = {}
+    for key in keys:
+        new_key = key_lkp[key]
+        if new_key in new_dict:
+            new_dict[new_key] += dct[key]
+        else:
+            new_dict[new_key] = dct[key]
+    return new_dict
+
+
+
