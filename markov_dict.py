@@ -18,18 +18,14 @@ class MarkovDict(object):
     def freq_dict(self, fl): 
         rt, data = wavfile.read(fl)
         windows = make_windows(fl, self.window_size)
-        return freq_dict(windows, rt)
+        return freq_dict(windows, rt, self.threshold)
 
     def list_freqs(self, fl):
         rt, windows = rate_and_windows(fl, self.window_size)
-        freq_list = get_freqs(windows, rt)
-        freq_zip = zip(freq_list, freq_list)
-        
-        grps = np.array(group_by_threshold(freq_zip, self.threshold))
-        grps = map(lambda x: x.T[0], grps)
-        grps = map(list, grps)
+        freq_list = get_freqs(windows, rt, self.threshold)
 
-        freqs = map(lambda grp: stats.mode(grp)[0][0], grps)
+        split = np.split(freq_list, np.where(np.abs(np.diff(freq_list)) > 0 )[0] + 1)
+        freqs = map(lambda arr: arr[0], split)
         return freqs
 
     def make_prefixes(self, fl):
@@ -72,14 +68,14 @@ class MarkovDict(object):
         freq_lu = self.freq_dict(fl)
         freqs = self.shred(duration, fl)
         data = [] 
-        used_freqs = []
+        #used_freqs = []
         for freq in freqs: 
             # used_freqs.append(freq)
             # idx = used_freqs.count(freq)-1
             # idx = idx % len(freq_lu[freq])
             freq_data = random.choice(freq_lu[freq])
             if len(freq_data) > self.filter_length:
-                data.append(freq_data ) #smooth_onset(freq_data))            
+                data.append(freq_data) # smooth_onset(freq_data))            
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)

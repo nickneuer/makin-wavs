@@ -21,7 +21,7 @@ flname = './wavs/input/' + fl
 
 #mk = MarkovDict(windows, rt, ngram_size)
 
-mk = MarkovDict(ngram_size, window_size=1024, filter_length=4096, threshold=10)
+mk = MarkovDict(ngram_size, window_size=1024, filter_length=4096, threshold=3)
 
 outfile = 'processed_' + fl
 
