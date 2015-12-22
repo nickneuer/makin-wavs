@@ -7,9 +7,22 @@ from matplotlib import pyplot as plt
 
 # rt, dat = wavfile.read(fl)
 
+def normalize_freqs(freqs, threshold):
+    ordered = sorted(freqs)
+    val = ordered[0]
+    freq_lu = {}
+    for freq in ordered:
+        if freq - val < threshold:
+            freq_lu[freq] = val
+        else:
+            val = freq
+            freq_lu[freq] = val
+    return map(lambda f: freq_lu[f], freqs) 
+
 def make_windows(fl, length):
     rate, data = wavfile.read(fl)
-    data = data.T[0]
+    if len(np.shape(data)) > 1:
+        data = data.T[0]
     return np.array_split(data, data.size/float(length))
     
 def rate_and_windows(fl, length):
@@ -37,8 +50,8 @@ def get_freqs(windows, rate, window_size=1024, threshold=5):
         #max_freq = rate * freqs[idx]
         max_freq = abs(rate * freqs[idx]) # unsure if abs should be used here
         filtered_freqs.append(max_freq)
-    modes = rolling_modes(rolling_modes(filtered_freqs))
-    return normalize_freq_list(modes, threshold)
+    modes = rolling_modes(filtered_freqs)
+    return normalize_freqs(modes, threshold)
 
 def plot_freqs(fl):
     rt = wavfile.read(fl)[0]
@@ -55,15 +68,6 @@ def group_by_threshold(li, threshold):
     li = np.array(li, dtype='O')
     return np.split(li, np.where(np.abs(np.diff(li.T[0])) > threshold)[0]+1)
 
-def normalize_freq_list(freq_list, threshold):
-    sorted_freqs = sorted(freq_list)
-    key_choices = np.split(sorted_freqs, np.where(np.abs(np.diff(sorted_freqs)) > threshold)[0] + 1)
-    key_lkp = {}
-    for arr in key_choices:
-        for elt in arr:
-            val = arr[0]
-            key_lkp[elt] = val
-    return map(lambda f: key_lkp[f], freq_list) 
 
 def freq_dict(windows, rate, threshold=5):
     freq_lu = dict()
@@ -85,12 +89,14 @@ def freq_dict(windows, rate, threshold=5):
 def smooth_onset(signal):
     return np.array(np.hanning(len(signal) ) * signal, dtype='int16') 
 
-def check_freqs(freq_list):
+def check_freqs(freq_list, rate):
     data = [0]
+    zeros = np.zeros(1024 * 4)
     for freq in freq_list:
+        freq = np.append(freq, zeros)
         data = np.append(data, freq)
         data = np.array(data, dtype='int16')
-    wavfile.write('test.wav', 44100, data)
+    wavfile.write('test.wav', rate, data)
 
 
 
