@@ -41,7 +41,6 @@ def get_freqs(windows, rate, window_size=1024, threshold=5):
     padding = np.zeros(window_size)
     padded_windows = map(lambda window: np.append(window, padding), hanning_windows) 
     fourier = [np.fft.fft(window) for window in padded_windows] # hanning_windows] 
-
     the_freqs = [np.fft.fftfreq(len(window)) for window in fourier]
     filtered_freqs = []
     for coeffs, freqs in zip(fourier, the_freqs):
@@ -83,7 +82,6 @@ def freq_dict(windows, rate, threshold=5):
             # groups together data which produces this frequency as value for freq_key
         else:
             freq_lu[freq_key].append(np.int16(np.concatenate(group.T[1])))
-
     return freq_lu
 
 def smooth_onset(signal):

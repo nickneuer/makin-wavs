@@ -40,7 +40,7 @@ for freq, note in freqWithData:
 
 out = []
 for x in data:
-	out.append(np.array(np.append(x * np.hanning(len(x)), zeros), dtype='int16') )
+	out.append(np.array( (x * np.hanning(2 * len(x))[0:len(x)])[::-1], dtype='int16')) #np.append(x * np.hanning(len(x)), zeros), dtype='int16') )
 
 wavfile.write('./wavs/output/frequency_check.wav', rt, np.concatenate(out))
 
