@@ -2,6 +2,7 @@ from scipy import stats
 import numpy as np
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
+from numpy.lib.stride_tricks import as_strided
 
 # fl = './wavs/input/scales_stuff.wav'
 
@@ -19,11 +20,21 @@ def normalize_freqs(freqs, threshold):
             freq_lu[freq] = val
     return map(lambda f: freq_lu[f], freqs) 
 
+def windowed_view(arr, window, overlap):
+    arr = np.asarray(arr)
+    window_step = window - overlap
+    new_shape = arr.shape[:-1] + ((arr.shape[-1] - overlap) // window_step,
+                                  window)
+    new_strides = (arr.strides[:-1] + (window_step * arr.strides[-1],) +
+                   arr.strides[-1:])
+    return as_strided(arr, shape=new_shape, strides=new_strides)
+
 def make_windows(fl, length):
     rate, data = wavfile.read(fl)
+    overlap = length / 2
     if len(np.shape(data)) > 1:
         data = data.T[0]
-    return np.array_split(data, data.size/float(length))
+    return windowed_view(data, length, overlap) # np.array_split(data, data.size/float(length))
     
 def rate_and_windows(fl, length):
     rate, data = wavfile.read(fl)
@@ -40,8 +51,8 @@ def get_freqs(windows, rate, window_size=1024, threshold=5):
     hanning_windows = [np.hanning(len(window))*window for window in windows]
     padding = np.zeros(window_size)
     padded_windows = map(lambda window: np.append(window, padding), hanning_windows) 
-    fourier = [np.fft.fft(window) for window in padded_windows] # hanning_windows] 
-    the_freqs = [np.fft.fftfreq(len(window)) for window in fourier]
+    fourier = [np.fft.rfft(window) for window in padded_windows] # hanning_windows] 
+    the_freqs = [np.fft.rfftfreq(len(window)) for window in fourier]
     filtered_freqs = []
     for coeffs, freqs in zip(fourier, the_freqs):
         #idx = np.argmax(np.abs(coeffs))
@@ -52,13 +63,14 @@ def get_freqs(windows, rate, window_size=1024, threshold=5):
     modes = rolling_modes(filtered_freqs)
     return normalize_freqs(modes, threshold)
 
+# n max: np.argsort(-arr)[:n]
+
 def plot_freqs(fl):
     rt = wavfile.read(fl)[0]
     windows = make_windows(fl, 1024)
     freqs = get_freqs(windows, rt)
     plt.plot(freqs, 'ro')
     plt.show()
-
 
 def group_by_threshold(li, threshold):
     # to group similar frequencies into same note
@@ -74,14 +86,17 @@ def freq_dict(windows, rate, threshold=5):
     the_freqs = get_freqs(windows, rate, threshold)
     # wanna zip up each freq with the data window that birthed it in a tuple
     freqs_and_windows = np.array(zip(the_freqs, windows), dtype='O')
+    groups = group_by_threshold(freqs_and_windows, 0)
+    filtered = filter(lambda a: np.size(a) >= 5, groups)
     for group in group_by_threshold(freqs_and_windows, 0):
         group = np.array(group, dtype='O')
         freq_key = group.T[0][0]
+        halfs = [a[0: np.size(a)/2] for a in group.T[1]]
         if freq_key not in freq_lu: 
-            freq_lu[freq_key] = [np.int16(np.concatenate(group.T[1]))]
+            freq_lu[freq_key] = [np.int16(np.concatenate(halfs))]
             # groups together data which produces this frequency as value for freq_key
         else:
-            freq_lu[freq_key].append(np.int16(np.concatenate(group.T[1])))
+            freq_lu[freq_key].append(np.int16(np.concatenate(halfs)))
     return freq_lu
 
 def smooth_onset(signal):

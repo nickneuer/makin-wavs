@@ -25,7 +25,10 @@ class MarkovDict(object):
         freq_list = get_freqs(windows, rt, self.threshold)
 
         split = np.split(freq_list, np.where(np.abs(np.diff(freq_list)) > 0 )[0] + 1)
-        freqs = map(lambda arr: arr[0], split)
+
+        filtered = filter(lambda a: np.size(a) >= 5, split)
+
+        freqs = map(lambda arr: arr[0], filtered)
         return freqs
 
     def make_prefixes(self, fl):
