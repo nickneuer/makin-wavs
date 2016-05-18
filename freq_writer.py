@@ -45,7 +45,7 @@ def rolling_modes(freqs):
     modes = map(lambda n: stats.mode(freqs[n-1 : n + 3])[0][0], np.arange(1, len(freqs) - 2))
     return modes
 
-def get_freqs(windows, rate, window_size=1024, threshold=5): 
+def get_freqs(windows, rate=44100, window_size=1024, threshold=5): 
     # returns a list of frequencies corresponding to each window
     # windows an array of np arrays
     hanning_windows = [np.hanning(len(window))*window for window in windows]
@@ -62,6 +62,39 @@ def get_freqs(windows, rate, window_size=1024, threshold=5):
         filtered_freqs.append(max_freq)
     modes = rolling_modes(filtered_freqs)
     return normalize_freqs(modes, threshold)
+
+def shc(window, fft_samples=1024, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
+    enveloped = np.hanning(len(window)) * window
+    spectrum = np.abs(np.fft.rfft(enveloped, fft_samples))
+    freqs = np.fft.rfftfreq(fft_samples) * rt
+    filtered_idxs = np.where((freqs >= fmin) & (freqs <= fmax))[0]
+    freqstep = float(rt) / fft_samples # freq change in Hz for each index into freqs
+    step_size = int((wl/2.) / freqstep)
+    def shc_n(n):
+        harms = np.arange(1, nharm + 2)
+        shcn = 0
+        for f in xrange(-1 * step_size, step_size + 1):
+            if n + f < 0:
+                prod = 0
+            else:
+                prod = np.prod(spectrum[ n * harms + f])
+            shcn += prod
+        return shcn
+    shc_values = freqs[filtered_idxs], map(shc_n, filtered_idxs)
+    return shc_values
+
+def get_freq_info(window):
+    'returns (coeffs, freqs) tuple'
+    hanning = np.hanning(len(window)) * window
+    fourier = np.fft.rfft(window)
+    freqs = np.fft.rfftfreq(len(window))
+    return fourier, freqs
+
+def top_n_freqs(window, n, rt=44100):
+    coeffs, freqs = get_freq_info(window)
+    n_max_idx = np.argsort(-coeffs)[:n + 2]
+    max_freqs = [rt * freqs[idx] for idx in n_max_idx]
+    return max_freqs[2:]
 
 # n max: np.argsort(-arr)[:n]
 
