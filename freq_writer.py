@@ -3,6 +3,7 @@ import numpy as np
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
 from numpy.lib.stride_tricks import as_strided
+import pyaudio
 
 # fl = './wavs/input/scales_stuff.wav'
 
@@ -142,14 +143,21 @@ def n_harm(f, n, A, wl):
     t = np.arange(wl) * tstep
     return np.array(A * np.sin(w * n * t), dtype='int16')
 
-def check_freqs(freq_list, rate):
-    data = [0]
-    zeros = np.zeros(1024 * 4)
-    for freq in freq_list:
-        freq = np.append(freq, zeros)
-        data = np.append(data, freq)
-        data = np.array(data, dtype='int16')
-    wavfile.write('test.wav', rate, data)
+def check_audio(audio_data):
+    p = pyaudio.PyAudio()
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=44100, output=1)
+    stream.write(audio_data)
+    stream.close()
+
+def play_windows(windows, start, stop):
+    data = windows[start:stop]
+    data = [d[:len(d)/2] for d in data] # get first half of each, since they're overlapped
+    data = np.array(np.concatenate(data), dtype='int16')
+    check_audio(data)
+
+def check_freq(f, length=50):
+    data = n_harm(f, 1, 15456, length)
+    check_audio(data)
 
 
 
