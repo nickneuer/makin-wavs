@@ -135,6 +135,13 @@ def freq_dict(windows, rate, threshold=5):
 def smooth_onset(signal):
     return np.array(np.hanning(len(signal) ) * signal, dtype='int16') 
 
+def n_harm(f, n, A, wl):
+    w = 2 * np.pi * f
+    rt = 44100
+    tstep = 1./rt
+    t = np.arange(wl) * tstep
+    return np.array(A * np.sin(w * n * t), dtype='int16')
+
 def check_freqs(freq_list, rate):
     data = [0]
     zeros = np.zeros(1024 * 4)

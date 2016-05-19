@@ -7,14 +7,14 @@ import sys
 # fl = './wavs/input/scales_stuff.wav'
 flnm = sys.argv[1]
 
-windowSize = int(sys.argv[2])
+windowSize = 1024 #int(sys.argv[2])
 
-threshold = int(sys.argv[3])
+threshold = 5 #int(sys.argv[3])
 
-filterLength = int(sys.argv[4])
+filterLength = 1024 * 4 #int(sys.argv[4])
 
 
-fl = './wavs/input/' + flnm
+fl = flnm
 
 rt, windows = rate_and_windows(fl, windowSize)
 
@@ -29,7 +29,7 @@ freqs, data = map(lambda x: stats.mode(x)[0][0], map(lambda x: x.T[0], groupedFr
 
 # data = map(np.concatenate, map(lambda x: x.T[1], groupedFreqs))
 
-data = filter(lambda x: x.size > filterLength, data)
+# data = filter(lambda x: x.size > filterLength, data)
 
 freqWithData = zip(freqs, data)
 
@@ -39,8 +39,8 @@ for freq, note in freqWithData:
 	print 'frequency: {0}     length: {1}'.format(freq, note.size)
 
 out = []
-for x in data:
-	out.append(np.array( (x * np.hanning(2 * len(x))[0:len(x)])[::-1], dtype='int16')) #np.append(x * np.hanning(len(x)), zeros), dtype='int16') )
+for f, x in freqWithData:
+	out.append(n_harm(f, 1, max(x), len(x))) #np.append(x * np.hanning(len(x)), zeros), dtype='int16') )
 
 wavfile.write('./wavs/output/frequency_check.wav', rt, np.concatenate(out))
 

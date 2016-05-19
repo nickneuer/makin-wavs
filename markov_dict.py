@@ -77,8 +77,9 @@ class MarkovDict(object):
             # idx = used_freqs.count(freq)-1
             # idx = idx % len(freq_lu[freq])
             freq_data = random.choice(freq_lu[freq])
-            if len(freq_data) > self.filter_length:
-                data.append(freq_data) #smooth_onset(freq_data))            
+            num_samples = len(freq_data)
+            if num_samples > self.filter_length:
+                data.append(n_harm(freq, 1, max(freq_data), num_samples)) #smooth_onset(freq_data))            
         data = np.concatenate(data)
         flname = './wavs/output/' + outfile
         wavfile.write(flname, rt, data)
