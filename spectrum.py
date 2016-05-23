@@ -12,45 +12,43 @@ windows = make_windows(fl, 1024)
 
 class Spectrum(object):
 
-	def __init__(self, freqs=[0], coeffs=[0]):
-		self.freqs = freqs
-		self.coeffs = coeffs
+    def __init__(self, window):
+        self.window = window
+        self._apply()
 
 	def plot(self):
 		plt.plot(self.freqs, self.coeffs)
 		plt.show()
 
 	def get_freq(self):
-		idx = np.argmax(self.coeffs)
-		f = self.freqs[idx]
-		return f
+        return self.freqs[np.argmax(self.coeffs)]
 
 
 class Fft(Spectrum):
 
-	def __init__(self, fft_samples=1024, rt=44100):
-        super(Fft, self).__init__()
+	def __init__(self, window, fft_samples=1024, rt=44100):
 		self.fft_samples = fft_samples
 		self.rt = rt
+        super(Fft, self).__init__()
 
-	def apply(self, window):
-		self.coeffs = np.abs(np.fft.rfft(np.hanning(len(window)) * window, self.fft_samples))
+	def _apply(self):
+		self.coeffs = np.abs(np.fft.rfft(np.hanning(len(self.window)) * self.window, self.fft_samples))
 		self.freqs = np.fft.rfftfreq(self.fft_samples) * self.rt
 
 
 class Shc(Spectrum):
 
-	def __init__(self, fft_samples=1024, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
-        super(Shc, self).__init__()
+	def __init__(self, window, fft_samples=1024, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
 		self.fft_samples = fft_samples
 		self.nharm = nharm
 		self.wl = wl
 		self.fmin = fmin
 		self.fmax = fmax
 		self.rt = rt
+        super(Shc, self).__init__()
 
-	def apply(self, window):
-        enveloped = np.hanning(len(window)) * window
+	def _apply(self):
+        enveloped = np.hanning(len(self.window)) * self.window
         spectrum = np.abs(np.fft.rfft(enveloped, self.fft_samples))
         freqs = np.fft.rfftfreq(self.fft_samples) * self.rt
         filtered_idxs = np.where((freqs >= self.fmin) & (freqs <= self.fmax))[0]
