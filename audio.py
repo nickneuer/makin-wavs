@@ -49,9 +49,9 @@ class WindowedSample(object):
     @staticmethod
     def _create_windows(sample, window_size, offset):
         windows = []
-
-        audiosample = np.append(sample.samples, np.zeros(np.size(sample.samples)).reshape(sample.samples.shape)) 
-
+ 
+        diff = (np.shape(sample.samples)[0] % window_size)
+        audiosample = np.append(sample.samples, np.zeros(diff)) 
         first = np.split(audiosample
             , np.where(np.arange(len(audiosample)) % window_size == 0)[0][1:])
 
@@ -89,5 +89,5 @@ if __name__ == '__main__':
 
     a = AudioSample.from_wav(f)
 
-    windows = a.windows()
+    windows = a.windows().windows
 
