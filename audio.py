@@ -27,8 +27,8 @@ class AudioSample(object):
         else:
             return AudioSample(self.rate, self.samples[:,i])
 
-    def windows(self, win_size, overlap):
-        return WindowedSample(self, win_size, overlap)
+    def windows(self, win_size=1024, offset=1024 / 2):
+        return WindowedSample(self, win_size, offset)
 
     def plot(self):
         if len(np.shape(self.samples)) > 1:
@@ -40,22 +40,37 @@ class AudioSample(object):
 
 class WindowedSample(object):
 
-    def __init__(self, sample, window_size, overlap):
+    def __init__(self, sample, window_size=1024, offset=1024/2):
         self.rate = sample.rate
         self.window_size = window_size
-        self.overlap = overlap
-        self.windows = _create_windows(sample, window_size)
+        self.offset = offset
+        self.windows = WindowedSample._create_windows(sample, window_size, offset)
 
     @staticmethod
-    def _create_windows(sample, window_size, overlap):
-        pass
-        
+    def _create_windows(sample, window_size, offset):
+        windows = []
+
+        audiosample = np.append(sample.samples, np.zeros(np.size(sample.samples)).reshape(sample.samples.shape)) 
+
+        first = np.split(audiosample
+            , np.where(np.arange(len(audiosample)) % window_size == 0)[0][1:])
+
+        second = np.split(audiosample[offset:len(audiosample) - offset]
+            , np.where(np.arange(len(audiosample) - offset) % window_size == 0)[0][1:])
+
+        for n in xrange(len(second)):
+            windows.append(Window(window_size, first[n], sample.rate))
+            windows.append(Window(window_size, second[n], sample.rate))
+        windows.append(Window(window_size, first[-1], sample.rate))
+        return windows
+
 
 class Window(object):
 
     def __init__(self, window_size, samples, rate):
         self.window_size = window_size
         self.samples = samples
+        self.rate = rate
 
     def hanning(self):
         return Window(
@@ -66,4 +81,13 @@ class Window(object):
     def plot(self):
         plt.plot(self.samples)
         plt.show()
+
+
+if __name__ == '__main__':
+    
+    f = './wavs/input/scales_stuff.wav'
+
+    a = AudioSample.from_wav(f)
+
+    windows = a.windows()
 
