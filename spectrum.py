@@ -2,12 +2,7 @@
 from matplotlib import pyplot as plt 
 import numpy as np
 from scipy.io import wavfile
-
 from freq_writer import * 
-
-fl = './wavs/input/scales_stuff.wav'
-
-windows = make_windows(fl, 1024)
 
 
 class Spectrum(object):
@@ -25,19 +20,23 @@ class Spectrum(object):
 
 class Fft(Spectrum):
     
-    def __init__(self, window, fft_samples=1024, rt=44100):
+    def __init__(self, window, fft_samples=1024*2, fmin=70, fmax=1300, rt=44100):
         self.fft_samples = fft_samples
         self.rt = rt
         self.window = window
+        self.fmin = fmin
+        self.fmax = fmax
         super(Fft, self).__init__()
 
     def _apply(self):
-        self.coeffs = np.abs(np.fft.rfft(np.hanning(len(self.window)) * self.window, self.fft_samples))
-        self.freqs = np.fft.rfftfreq(self.fft_samples) * self.rt
+        coeffs = np.abs(np.fft.rfft(np.hanning(len(self.window)) * self.window, self.fft_samples))
+        freqs = np.fft.rfftfreq(self.fft_samples) * self.rt
+        filtered_idxs = np.where((freqs >= self.fmin) & (freqs <= self.fmax))[0]
+        self.coeffs, self.freqs = coeffs[filtered_idxs], freqs[filtered_idxs]
 
 
 class Shc(Spectrum):
-    def __init__(self, window, fft_samples=1024, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
+    def __init__(self, window, fft_samples=1024*2, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
         self.fft_samples = fft_samples
         self.nharm = nharm
         self.wl = wl
@@ -65,3 +64,8 @@ class Shc(Spectrum):
                 shcn += prod
             return shcn
         self.freqs, self.coeffs = freqs[filtered_idxs], map(shc_n, filtered_idxs)
+
+
+if __name__ == '__main__':
+    fl = './wavs/input/scales_stuff.wav'
+    windows = make_windows(fl, 1024)

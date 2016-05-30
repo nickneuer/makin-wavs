@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
+from spectrum import * 
+from note_lookup import Note
 
 class AudioSample(object):
     
@@ -65,6 +67,7 @@ class WindowedSample(object):
         return windows
 
 
+
 class Window(object):
 
     def __init__(self, window_size, samples, rate):
@@ -81,6 +84,16 @@ class Window(object):
     def plot(self):
         plt.plot(self.samples)
         plt.show()
+
+    def plot_spectrum(self, transform=Fft, **transform_args):
+        transform(self.samples, **transform_args).plot()
+
+    def get_freq(self, transform=Fft, **transform_args):
+        return round(transform(self.samples, **transform_args).get_freq(), 1)
+
+    def get_note(self, transform=Fft, **transform_args):
+        freq = self.get_freq(transform=Fft, **transform_args)
+        return Note.from_frequency(freq)
 
 
 if __name__ == '__main__':
