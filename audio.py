@@ -92,7 +92,7 @@ class Window(object):
         return round(transform(self.samples, **transform_args).get_freq(), 1)
 
     def get_note(self, transform=Fft, **transform_args):
-        freq = self.get_freq(transform=Fft, **transform_args)
+        freq = self.get_freq(transform, **transform_args)
         return Note.from_frequency(freq)
 
 

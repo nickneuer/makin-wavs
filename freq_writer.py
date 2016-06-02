@@ -136,7 +136,7 @@ def freq_dict(windows, rate, threshold=5):
 def smooth_onset(signal):
     return np.array(np.hanning(len(signal) ) * signal, dtype='int16') 
 
-def n_harm(f, n, A, wl):
+def nth_harmonic(f, n, A, wl):
     w = 2 * np.pi * f
     rt = 44100
     tstep = 1./rt
@@ -150,13 +150,13 @@ def check_audio(audio_data):
     stream.close()
 
 def play_windows(windows, start, stop):
-    data = windows[start:stop]
-    data = [d[:len(d)/2] for d in data] # get first half of each, since they're overlapped
+    windows = windows[start:stop]
+    data = [w.samples[:len(w.samples)/2] for w in windows] # get first half of each, since they're overlapped
     data = np.array(np.concatenate(data), dtype='int16')
     check_audio(data)
 
-def check_freq(f, length=50):
-    data = n_harm(f, 1, 15456, length)
+def check_freq(f, length=1024 * 50):
+    data = nth_harmonic(f, 1, 15456, length)
     check_audio(data)
 
 

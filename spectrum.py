@@ -1,13 +1,11 @@
 
 from matplotlib import pyplot as plt 
 import numpy as np
-from scipy.io import wavfile
-from freq_writer import * 
+from scipy.io import wavfile 
 
 
 class Spectrum(object):
     def __init__(self):
-        #self.window = window
         self._apply()
 
     def plot(self):
@@ -64,8 +62,3 @@ class Shc(Spectrum):
                 shcn += prod
             return shcn
         self.freqs, self.coeffs = freqs[filtered_idxs], map(shc_n, filtered_idxs)
-
-
-if __name__ == '__main__':
-    fl = './wavs/input/scales_stuff.wav'
-    windows = make_windows(fl, 1024)
