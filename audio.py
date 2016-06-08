@@ -1,8 +1,10 @@
+
 import numpy as np
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
 from spectrum import * 
 from note_lookup import Note
+from note_audio import NoteAudio
 
 class AudioSample(object):
     
@@ -29,8 +31,8 @@ class AudioSample(object):
         else:
             return AudioSample(self.rate, self.samples[:,i])
 
-    def windows(self, win_size=1024, offset=1024 / 2):
-        return WindowedSample(self, win_size, offset)
+    def windows(self, window_size=1024 * 4, offset=1024 * 2):
+        return WindowedSample(self, window_size, offset)
 
     def plot(self):
         if len(np.shape(self.samples)) > 1:
@@ -42,7 +44,7 @@ class AudioSample(object):
 
 class WindowedSample(object):
 
-    def __init__(self, sample, window_size=1024, offset=1024/2):
+    def __init__(self, sample, window_size=1024 * 4, offset=1024 * 2):
         self.rate = sample.rate
         self.window_size = window_size
         self.offset = offset
@@ -52,7 +54,7 @@ class WindowedSample(object):
     def _create_windows(sample, window_size, offset):
         windows = []
  
-        diff = (np.shape(sample.samples)[0] % window_size)
+        diff = window_size - (np.shape(sample.samples)[0] % window_size)
         audiosample = np.append(sample.samples, np.zeros(diff)) 
         first = np.split(audiosample
             , np.where(np.arange(len(audiosample)) % window_size == 0)[0][1:])
@@ -60,12 +62,28 @@ class WindowedSample(object):
         second = np.split(audiosample[offset:len(audiosample) - offset]
             , np.where(np.arange(len(audiosample) - offset) % window_size == 0)[0][1:])
 
-        for n in xrange(len(second)):
+        for n in xrange(len(second) - 1):
             windows.append(Window(window_size, first[n], sample.rate))
             windows.append(Window(window_size, second[n], sample.rate))
         windows.append(Window(window_size, first[-1], sample.rate))
         return windows
 
+    def to_played_notes(self, transform=Fft, **transform_args):
+
+        def unpack_windows(windows):
+            return np.array(
+                np.concatenate(
+                    map(lambda w: w.samples[:self.offset], windows )
+                ), dtype='int16')  
+
+        notes = np.array(map(lambda w: w.get_note(transform, **transform_args), self.windows))
+        note_switches = np.where(np.abs(
+            np.diff(
+                np.array(map(lambda n: n.to_frequency(), notes))
+                )
+            ) > 0)[0] + 1
+        return [NoteAudio(notes[0], unpack_windows(windows)) for notes, windows in \
+            zip(np.split(notes, note_switches), np.split(self.windows, note_switches))]
 
 
 class Window(object):

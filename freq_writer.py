@@ -136,11 +136,11 @@ def freq_dict(windows, rate, threshold=5):
 def smooth_onset(signal):
     return np.array(np.hanning(len(signal) ) * signal, dtype='int16') 
 
-def nth_harmonic(f, n, A, wl):
+def nth_harmonic(f, A, num_samples, n=1):
     w = 2 * np.pi * f
     rt = 44100
     tstep = 1./rt
-    t = np.arange(wl) * tstep
+    t = np.arange(num_samples) * tstep
     return np.array(A * np.sin(w * n * t), dtype='int16')
 
 def check_audio(audio_data):
