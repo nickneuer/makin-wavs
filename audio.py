@@ -68,7 +68,7 @@ class WindowedSample(object):
         windows.append(Window(window_size, first[-1], sample.rate))
         return windows
 
-    def to_played_notes(self, transform=Fft, **transform_args):
+    def to_training_notes(self, transform=Fft, **transform_args):
 
         def unpack_windows(windows):
             return np.array(
@@ -82,7 +82,7 @@ class WindowedSample(object):
                 np.array(map(lambda n: n.to_frequency(), notes))
                 )
             ) > 0)[0] + 1
-        return [NoteAudio(notes[0], unpack_windows(windows)) for notes, windows in \
+        return [NoteAudio(notes[0], unpack_windows(windows), self.rate) for notes, windows in \
             zip(np.split(notes, note_switches), np.split(self.windows, note_switches))]
 
 

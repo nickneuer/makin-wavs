@@ -17,7 +17,7 @@ class SoloBot(object):
 		states = {}
 		for ngrams_plus in self.ngrams():
 
-			k = tuple(self._notes(ngrams_plus[0: self.ngram_size]))
+			k = tuple(self._frequencies(ngrams_plus[0: self.ngram_size]))
 			v = ngrams_plus[-1]
 
 			if k not in states:
@@ -28,12 +28,15 @@ class SoloBot(object):
 
 	def _wank(self, wank_count, sinewave=False):
 		num = random.randint(0, len(self.training_notes) - self.ngram_size)
-		wank_seed = self.training_notes[num: num + self.ngram_size]
-		licks = [wank_seed]
+		licks = self._seed()
 		for _ in xrange(wank_count):
-			k = tuple(self._notes(licks[-1 * self.ngram_size: ]))
-			new_note = random.choice(self.markov_states()[k])
-			licks.append(new_note)
+			k = tuple(self._frequencies(licks[-1 * self.ngram_size: ]))
+			try:
+				new_note = random.choice(self.markov_states()[k])
+				licks.append(new_note)
+			except KeyError:
+				print 'reseeding...'
+				licks += self._seed()
 		return licks
 
 	def shred(self, num_notes, sinewave=False):
@@ -43,16 +46,38 @@ class SoloBot(object):
 			audio_data = np.append(audio_data, lick.dump_audio(sinewave))
 		return audio_data
 
-	def _notes(self, note_audio_list):
-		return map(lambda n: n.note, note_audio_list)
+	def clean_training(self, min_samples=1024 * 4 * 2):
+		new_training_notes = [self.training_notes[0]]
+		for n, audio_note in enumerate(self.training_notes):
+			if n == 0:
+				pass
+
+			elif len(audio_note.audio) <= min_samples:
+				old = new_training_notes[-1]
+				new_training_notes[-1] = NoteAudio(old.note, np.append(old.audio, audio_note.audio))
+
+			else: 
+				 new_training_notes.append(audio_note)
+
+		return SoloBot(self.ngram_size, new_training_notes)  
+
+	def _seed(self):
+		num = random.randint(0, len(self.training_notes) - self.ngram_size)
+		return self.training_notes[num: num + self.ngram_size]
+
+	def _frequencies(self, note_audio_list):
+		return map(lambda n: n.note.to_frequency(), note_audio_list)
 
 if __name__ == '__main__':
- 
-	f = './wavs/input/scales_stuff.wav'
+ 	from freq_writer import check_audio
+ 	import sys
+
+	f = sys.argv[1]
 	a = AudioSample.from_wav(f)
-	training = a.left_channel().windows().to_played_notes()
-	sb = SoloBot(4, training)
-	sb.shred(10)
+	training = a.left_channel().windows().to_training_notes()
+	sb = SoloBot(2, training)
+	
+
 
 
 

@@ -18,7 +18,7 @@ class Spectrum(object):
 
 class Fft(Spectrum):
     
-    def __init__(self, window, fft_samples=1024*2, fmin=70, fmax=1300, rt=44100):
+    def __init__(self, window, fft_samples=1024 * 4 * 2, fmin=70, fmax=1300, rt=44100):
         self.fft_samples = fft_samples
         self.rt = rt
         self.window = window
@@ -34,7 +34,7 @@ class Fft(Spectrum):
 
 
 class Shc(Spectrum):
-    def __init__(self, window, fft_samples=1024*2, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
+    def __init__(self, window, fft_samples=1024 * 4 * 2, nharm=3, wl=40, fmin=70, fmax=1300, rt=44100):
         self.fft_samples = fft_samples
         self.nharm = nharm
         self.wl = wl

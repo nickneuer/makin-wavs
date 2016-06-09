@@ -5,6 +5,7 @@ import numpy as np
 class Note():
 	
 	notes = ['A', 'Bb', 'B', 'C', 'Db', 'D','Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+	# I know, I know. No microtonal support, so pedestrian.
 
 	def __init__(self, pitch, octave):
 		self.pitch = pitch 

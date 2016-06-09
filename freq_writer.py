@@ -143,9 +143,9 @@ def nth_harmonic(f, A, num_samples, n=1):
     t = np.arange(num_samples) * tstep
     return np.array(A * np.sin(w * n * t), dtype='int16')
 
-def check_audio(audio_data):
+def check_audio(audio_data, rate=44100):
     p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=44100, output=1)
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=rate, output=1)
     stream.write(audio_data)
     stream.close()
 
