@@ -2,9 +2,9 @@
 import numpy as np
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
-from spectrum import * 
-from note_lookup import Note
-from note_audio import NoteAudio
+from spectrum import Fft, Shc, Spectrum
+from music import Note, NoteSample
+import pyaudio
 
 class AudioSample(object):
     
@@ -40,6 +40,12 @@ class AudioSample(object):
         else:
             plt.plot(self.samples)
             plt.show()
+
+    def play(self):
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.rate, output=1)
+        stream.write(self.samples)
+        stream.close()
 
 
 class WindowedSample(object):
@@ -82,7 +88,7 @@ class WindowedSample(object):
                 np.array(map(lambda n: n.to_frequency(), notes))
                 )
             ) > 0)[0] + 1
-        return [NoteAudio(notes[0], unpack_windows(windows), self.rate) for notes, windows in \
+        return [NoteSample(notes[0], unpack_windows(windows), self.rate) for notes, windows in \
             zip(np.split(notes, note_switches), np.split(self.windows, note_switches))]
 
 

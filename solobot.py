@@ -1,6 +1,6 @@
 
 import numpy as np 
-from note_audio import * 
+from music import NoteSample, Note 
 from audio import * 
 import random
 
@@ -11,15 +11,12 @@ class SoloBot(object):
 
 	def ngrams(self):
 		for n in xrange(len(self.training_notes) - self.ngram_size - 1):
-			yield self.training_notes[n: n + self.ngram_size + 1]
+			training = self.training_notes
+			yield tuple(training[n: n + self.ngram_size]), training[n + self.ngram_size]
 
 	def markov_states(self):
 		states = {}
-		for ngrams_plus in self.ngrams():
-
-			k = tuple(self._frequencies(ngrams_plus[0: self.ngram_size]))
-			v = ngrams_plus[-1]
-
+		for k, v in self.ngrams():
 			if k not in states:
 				states[k] = [v]
 			else:
@@ -27,10 +24,9 @@ class SoloBot(object):
 		return states
 
 	def _wank(self, wank_count, sinewave=False):
-		num = random.randint(0, len(self.training_notes) - self.ngram_size)
 		licks = self._seed()
 		for _ in xrange(wank_count):
-			k = tuple(self._frequencies(licks[-1 * self.ngram_size: ]))
+			k = tuple(licks[-1 * self.ngram_size: ])
 			try:
 				new_note = random.choice(self.markov_states()[k])
 				licks.append(new_note)
@@ -44,7 +40,7 @@ class SoloBot(object):
 		audio_data = np.array(0, dtype='int16')
 		for lick in licks:
 			audio_data = np.append(audio_data, lick.dump_audio(sinewave))
-		return audio_data
+		return AudioSample(self.training_notes[0].sample_rate, audio_data)
 
 	def clean_training(self, min_samples=1024 * 4 * 2):
 		new_training_notes = [self.training_notes[0]]
@@ -54,7 +50,7 @@ class SoloBot(object):
 
 			elif len(audio_note.audio) <= min_samples:
 				old = new_training_notes[-1]
-				new_training_notes[-1] = NoteAudio(old.note, np.append(old.audio, audio_note.audio))
+				new_training_notes[-1] = NoteSample(old.note, np.append(old.audio, audio_note.audio))
 
 			else: 
 				 new_training_notes.append(audio_note)
@@ -65,8 +61,6 @@ class SoloBot(object):
 		num = random.randint(0, len(self.training_notes) - self.ngram_size)
 		return self.training_notes[num: num + self.ngram_size]
 
-	def _frequencies(self, note_audio_list):
-		return map(lambda n: n.note.to_frequency(), note_audio_list)
 
 if __name__ == '__main__':
  	from freq_writer import check_audio
@@ -76,7 +70,7 @@ if __name__ == '__main__':
 	a = AudioSample.from_wav(f)
 	training = a.left_channel().windows().to_training_notes()
 	sb = SoloBot(2, training)
-	
+	sbc = sb.clean_training(a.windows().window_size)
 
 
 
